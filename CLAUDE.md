@@ -43,4 +43,13 @@ Incline Bench
 185x8
 
 ## Architecture
-Pure frontend application powered by React and vite 
+* Pure frontend application powered by React and vite .
+* TypeScript / pnpm
+* Biome formatting and linting validation
+* Playwright testing
+
+## Verification
+* `pnpm dev` — start dev server, confirm page renders with no console errors
+* `pnpm build` — production build must succeed
+* `pnpm lint` — Biome check must pass
+* `pnpm test` — Playwright smoke tests must pass
