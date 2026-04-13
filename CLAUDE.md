@@ -45,6 +45,7 @@ Incline Bench
 ## Architecture
 * Pure frontend application powered by React and vite .
 * TypeScript / pnpm
+* Tailwind css
 * Biome formatting and linting validation
 * Playwright testing
 
