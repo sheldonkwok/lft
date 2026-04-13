@@ -18,6 +18,29 @@ function App() {
 		() => getSuggestionContext(text, caret, EXERCISES),
 		[text, caret],
 	);
+
+	const isSetContext = useMemo(() => {
+		const lines = text.split("\n");
+		let offset = 0;
+		for (let i = 0; i < lines.length; i++) {
+			const end = offset + lines[i].length;
+			if (caret <= end) {
+				const cur = lines[i].trim();
+				if (/^\d/.test(cur)) return true;
+				if (i > 0) {
+					const prev = lines[i - 1].trim();
+					if (/^\d/.test(prev)) return true;
+					if (
+						EXERCISES.some((e) => e.name.toLowerCase() === prev.toLowerCase())
+					)
+						return true;
+				}
+				return false;
+			}
+			offset = end + 1;
+		}
+		return false;
+	}, [text, caret]);
 	const showSuggestions = suggestions.active && !dismissed;
 
 	useEffect(() => {
@@ -88,7 +111,8 @@ function App() {
 							data-testid="workout-input"
 							value={text}
 							onChange={(e) => {
-								setText(e.target.value);
+								const val = e.target.value.replace(/\./g, "x");
+								setText(val);
 								setCaret(e.target.selectionStart);
 								setDismissed(false);
 							}}
@@ -97,6 +121,7 @@ function App() {
 							onClick={syncCaret}
 							onKeyDown={onKeyDown}
 							placeholder="Bench&#10;135x8&#10;225x5"
+							inputMode={isSetContext ? "numeric" : "text"}
 							spellCheck={false}
 							autoCapitalize="off"
 							autoCorrect="off"
