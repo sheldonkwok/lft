@@ -34,10 +34,10 @@ function App() {
 		const choice = suggestions.candidates[index];
 		if (!choice) return;
 		const after = text.slice(suggestions.lineEnd);
-		const insert =
-			after.startsWith("\n") ? choice.name : `${choice.name}\n`;
+		const insert = after.startsWith("\n") ? choice.name : `${choice.name}\n`;
 		const next = text.slice(0, suggestions.lineStart) + insert + after;
-		const newCaret = suggestions.lineStart + insert.length + (after.startsWith("\n") ? 1 : 0);
+		const newCaret =
+			suggestions.lineStart + insert.length + (after.startsWith("\n") ? 1 : 0);
 		setText(next);
 		setHighlight(0);
 		requestAnimationFrame(() => {

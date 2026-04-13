@@ -19,7 +19,9 @@ test("typing filters suggestions by prefix", async ({ page }) => {
 test("clicking a suggestion completes the line", async ({ page }) => {
 	await page.getByTestId("workout-input").fill("I");
 	await page.getByTestId("suggestion-item").first().click();
-	await expect(page.getByTestId("workout-input")).toHaveValue("Incline Bench\n");
+	await expect(page.getByTestId("workout-input")).toHaveValue(
+		"Incline Bench\n",
+	);
 	await expect(page.getByTestId("status-valid")).toContainText("1 exercise");
 });
 
