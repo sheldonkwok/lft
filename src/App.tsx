@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { EXERCISES } from "./exercises";
-import { parseWorkout } from "./parser";
+import { parseWorkout, SET_RE } from "./parser";
 import { getSuggestionContext } from "./suggest";
 
 function App() {
@@ -78,6 +78,27 @@ function App() {
 	}
 
 	function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+		if (e.key === "Enter") {
+			const lines = text.split("\n");
+			let lineIdx = 0;
+			let offset = 0;
+			for (let i = 0; i < lines.length; i++) {
+				const end = offset + lines[i].length;
+				if (caret <= end) {
+					lineIdx = i;
+					break;
+				}
+				offset = end + 1;
+				lineIdx = i + 1;
+			}
+			const currentLine = (lines[lineIdx] ?? "").trim();
+			const prev = lineIdx > 0 ? lines[lineIdx - 1].trim() : "";
+			const isSlot = lineIdx === 0 || prev === "";
+			if (!isSlot && currentLine !== "" && !SET_RE.test(currentLine)) {
+				e.preventDefault();
+				return;
+			}
+		}
 		if (!showSuggestions) return;
 		if (e.key === "ArrowDown") {
 			e.preventDefault();

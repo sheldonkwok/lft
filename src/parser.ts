@@ -8,7 +8,7 @@ export type ParseResult = {
 	errors: ParseError[];
 };
 
-const SET_RE = /^(\d+)x(\d+)$/;
+export const SET_RE = /^(\d+)x(\d+)$/;
 
 export function parseWorkout(text: string, known: Exercise[]): ParseResult {
 	const byLower = new Map(known.map((e) => [e.name.toLowerCase(), e]));
