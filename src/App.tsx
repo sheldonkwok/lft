@@ -24,6 +24,10 @@ function App() {
 		if (highlight >= suggestions.candidates.length) setHighlight(0);
 	}, [highlight, suggestions.candidates.length]);
 
+	useEffect(() => {
+		textareaRef.current?.focus();
+	}, []);
+
 	function syncCaret() {
 		const el = textareaRef.current;
 		if (el) setCaret(el.selectionStart);

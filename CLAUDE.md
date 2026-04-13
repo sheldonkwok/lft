@@ -53,5 +53,4 @@ Incline Bench
 * `pnpm dev` — start dev server, confirm page renders with no console errors
 * `pnpm build` — production build must succeed
 * `pnpm lint` — Biome check must pass
-* `pnpm format` — Biome check must pass
 * `pnpm test` — Playwright smoke tests must pass
