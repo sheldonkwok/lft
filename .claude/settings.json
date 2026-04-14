@@ -4,5 +4,20 @@
       "Bash(git:*)",
       "Bash(gh:*)"
     ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /home/sheldon/Work/lft/.claude/verify.sh",
+            "timeout": 120,
+            "statusMessage": "Verifying build, lint, and tests...",
+            "asyncRewake": true
+          }
+        ]
+      }
+    ]
   }
 }

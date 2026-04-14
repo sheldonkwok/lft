@@ -52,12 +52,6 @@ Incline Bench
 * Playwright testing
 * Strava API https://developers.strava.com/docs/reference/
 
-## Verification
-* `pnpm dev` — start dev server, confirm page renders with no console errors
-* `pnpm build` — production build must succeed
-* `pnpm lint` — Biome check must pass
-* `pnpm test` — Playwright smoke tests must pass
-
 ## Development
 * Use semantic commit messages (e.g. `feat:`, `fix:`, `refactor:`, `chore:`).
 * When an agent is working in a worktree, it must: commit its work, push the branch to GitHub, and open a PR. Show the link to the PR if it's created.
