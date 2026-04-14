@@ -5,13 +5,20 @@ import { handle } from "hono/vercel";
 
 export const config = { runtime: "edge" };
 
-export const app = new Hono().basePath("/api");
+type Bindings = {
+	STRAVA_CLIENT_ID: string;
+	STRAVA_CLIENT_SECRET: string;
+	STRAVA_REDIRECT_URI: string;
+	NODE_ENV: string;
+};
+
+export const app = new Hono<{ Bindings: Bindings }>().basePath("/api");
 
 app.get("/auth/strava", (c) => {
 	const strava = new Strava(
-		process.env.STRAVA_CLIENT_ID ?? "",
-		process.env.STRAVA_CLIENT_SECRET ?? "",
-		process.env.STRAVA_REDIRECT_URI ?? "",
+		c.env.STRAVA_CLIENT_ID,
+		c.env.STRAVA_CLIENT_SECRET,
+		c.env.STRAVA_REDIRECT_URI,
 	);
 	const state = generateState();
 	const url = strava.createAuthorizationURL(state, [
@@ -21,7 +28,7 @@ app.get("/auth/strava", (c) => {
 
 	setCookie(c, "strava_oauth_state", state, {
 		httpOnly: true,
-		secure: process.env.NODE_ENV === "production",
+		secure: c.env.NODE_ENV === "production",
 		sameSite: "Lax",
 		maxAge: 600,
 		path: "/",
