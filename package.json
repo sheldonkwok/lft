@@ -4,7 +4,7 @@
 	"version": "0.0.0",
 	"type": "module",
 	"scripts": {
-		"dev": "concurrently \"vite --host\" \"tsx watch api/dev.ts\"",
+		"dev": "vite",
 		"build": "tsc -b && vite build",
 		"lint": "biome check . && biome format --write .",
 		"preview": "vite preview",
@@ -25,7 +25,6 @@
 		"@types/react": "^19.2.14",
 		"@types/react-dom": "^19.2.3",
 		"@vitejs/plugin-react": "^6.0.1",
-		"concurrently": "^9.2.1",
 		"tailwindcss": "^4.2.2",
 		"tsx": "^4.21.0",
 		"typescript": "~6.0.2",
