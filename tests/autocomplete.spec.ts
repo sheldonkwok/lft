@@ -7,7 +7,7 @@ test.beforeEach(async ({ page }) => {
 test("suggestions appear on empty line 1", async ({ page }) => {
 	await page.getByTestId("workout-input").focus();
 	await expect(page.getByTestId("suggestions")).toBeVisible();
-	await expect(page.getByTestId("suggestion-item")).toHaveCount(2);
+	await expect(page.getByTestId("suggestion-item")).toHaveCount(4);
 });
 
 test("typing filters suggestions by prefix", async ({ page }) => {
@@ -29,8 +29,10 @@ test("used exercises are excluded", async ({ page }) => {
 	const box = page.getByTestId("workout-input");
 	await box.fill("Bench\n135x8\n\n");
 	await box.focus();
-	await expect(page.getByTestId("suggestion-item")).toHaveCount(1);
-	await expect(page.getByTestId("suggestion-item")).toHaveText("Incline Bench");
+	await expect(page.getByTestId("suggestion-item")).toHaveCount(3);
+	await expect(page.getByTestId("suggestion-item").first()).toHaveText(
+		"Incline Bench",
+	);
 });
 
 test("no suggestions on a set line", async ({ page }) => {

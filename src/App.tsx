@@ -3,7 +3,7 @@ import { EXERCISES } from "./exercises";
 import { parseWorkout, SET_RE } from "./parser";
 import { getSuggestionContext } from "./suggest";
 
-function App() {
+function useWorkoutEditor() {
 	const [text, setText] = useState("");
 	const [caret, setCaret] = useState(0);
 	const [highlight, setHighlight] = useState(0);
@@ -41,6 +41,7 @@ function App() {
 		}
 		return false;
 	}, [text, caret]);
+
 	const showSuggestions = suggestions.active && !dismissed;
 
 	useEffect(() => {
@@ -75,6 +76,13 @@ function App() {
 				setCaret(newCaret);
 			}
 		});
+	}
+
+	function onChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+		const val = e.target.value.replace(/\./g, "x");
+		setText(val);
+		setCaret(e.target.selectionStart);
+		setDismissed(false);
 	}
 
 	function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -119,6 +127,40 @@ function App() {
 		}
 	}
 
+	return {
+		text,
+		result,
+		valid,
+		totalSets,
+		suggestions,
+		showSuggestions,
+		isSetContext,
+		highlight,
+		textareaRef,
+		syncCaret,
+		accept,
+		onChange,
+		onKeyDown,
+	};
+}
+
+function App() {
+	const {
+		text,
+		result,
+		valid,
+		totalSets,
+		suggestions,
+		showSuggestions,
+		isSetContext,
+		highlight,
+		textareaRef,
+		syncCaret,
+		accept,
+		onChange,
+		onKeyDown,
+	} = useWorkoutEditor();
+
 	return (
 		<main className="min-h-screen bg-stone-100 px-5 py-10">
 			<div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-[1fr_280px]">
@@ -131,12 +173,7 @@ function App() {
 							ref={textareaRef}
 							data-testid="workout-input"
 							value={text}
-							onChange={(e) => {
-								const val = e.target.value.replace(/\./g, "x");
-								setText(val);
-								setCaret(e.target.selectionStart);
-								setDismissed(false);
-							}}
+							onChange={onChange}
 							onSelect={syncCaret}
 							onKeyUp={syncCaret}
 							onClick={syncCaret}
