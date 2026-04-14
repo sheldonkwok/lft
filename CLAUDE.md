@@ -15,6 +15,7 @@
 * They can select an exercise for their workout.
 * Under the exercise they will input the number of sets
 * Sets look like 135x8
+* After a user works out, they will be able to click an export to strava button.
 
 ### Input Experience
 It will look like a plain text input to start.
