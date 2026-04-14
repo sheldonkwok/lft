@@ -8,6 +8,7 @@ function useWorkoutEditor() {
 	const [caret, setCaret] = useState(0);
 	const [highlight, setHighlight] = useState(0);
 	const [dismissed, setDismissed] = useState(false);
+	const [keyboardHeight, setKeyboardHeight] = useState(0);
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 
 	const result = useMemo(() => parseWorkout(text, EXERCISES), [text]);
@@ -50,6 +51,18 @@ function useWorkoutEditor() {
 
 	useEffect(() => {
 		textareaRef.current?.focus();
+	}, []);
+
+	useEffect(() => {
+		const vv = window.visualViewport;
+		if (!vv) return;
+		function handleResize() {
+			setKeyboardHeight(
+				Math.max(0, window.innerHeight - (vv?.height ?? window.innerHeight)),
+			);
+		}
+		vv.addEventListener("resize", handleResize);
+		return () => vv.removeEventListener("resize", handleResize);
 	}, []);
 
 	function syncCaret() {
@@ -151,6 +164,7 @@ function useWorkoutEditor() {
 		showSuggestions,
 		isSetContext,
 		highlight,
+		keyboardHeight,
 		textareaRef,
 		syncCaret,
 		accept,
@@ -172,6 +186,7 @@ function App() {
 		showSuggestions,
 		isSetContext,
 		highlight,
+		keyboardHeight,
 		textareaRef,
 		syncCaret,
 		accept,
@@ -284,7 +299,18 @@ function App() {
 						{showSuggestions && (
 							<ul
 								data-testid="suggestions"
-								className="mt-2 flex flex-col gap-1 rounded-md border border-stone-200 bg-white p-1 font-mono text-base shadow-sm"
+								className="flex flex-col gap-1 rounded-md border border-stone-200 bg-white p-1 font-mono text-base shadow-sm"
+								style={
+									keyboardHeight > 0
+										? {
+												position: "fixed",
+												bottom: keyboardHeight + 8,
+												left: 16,
+												right: 16,
+												zIndex: 50,
+											}
+										: { marginTop: "0.5rem" }
+								}
 							>
 								{suggestions.candidates.map((c, i) => (
 									<li key={c.name}>
