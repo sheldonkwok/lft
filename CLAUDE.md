@@ -49,6 +49,7 @@ Incline Bench
 * Tailwind css
 * Biome formatting and linting validation
 * Playwright testing
+* Strava API https://developers.strava.com/docs/reference/
 
 ## Verification
 * `pnpm dev` — start dev server, confirm page renders with no console errors

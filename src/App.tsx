@@ -129,6 +129,7 @@ function useWorkoutEditor() {
 
 	return {
 		text,
+		setText,
 		result,
 		valid,
 		totalSets,
@@ -149,6 +150,7 @@ type SyncStatus = "idle" | "loading" | "success" | "error";
 function App() {
 	const {
 		text,
+		setText,
 		result,
 		valid,
 		totalSets,
@@ -164,15 +166,36 @@ function App() {
 	} = useWorkoutEditor();
 
 	const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
+	const [autoSync, setAutoSync] = useState(false);
+
+	useEffect(() => {
+		const saved = localStorage.getItem("pending_workout");
+		if (saved) {
+			localStorage.removeItem("pending_workout");
+			setText(saved);
+			setAutoSync(true);
+		}
+	}, [setText]);
 
 	const syncToStrava = useCallback(async () => {
 		setSyncStatus("loading");
+		const now = new Date();
+		const pad = (n: number) => String(n).padStart(2, "0");
+		const startDateLocal = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
 		try {
 			const res = await fetch("/api/strava/sync", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ exercises: result.exercises }),
+				body: JSON.stringify({
+					exercises: result.exercises,
+					startDateLocal,
+				}),
 			});
+			if (res.status === 401) {
+				localStorage.setItem("pending_workout", text);
+				window.location.href = "/api/auth/strava";
+				return;
+			}
 			if (!res.ok) {
 				setSyncStatus("error");
 				return;
@@ -181,7 +204,14 @@ function App() {
 		} catch {
 			setSyncStatus("error");
 		}
-	}, [result.exercises]);
+	}, [result.exercises, text]);
+
+	useEffect(() => {
+		if (autoSync && valid && result.exercises.length > 0) {
+			setAutoSync(false);
+			syncToStrava();
+		}
+	}, [autoSync, valid, result.exercises.length, syncToStrava]);
 
 	const canSync = valid && result.exercises.length > 0;
 
