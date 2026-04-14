@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EXERCISES } from "./exercises";
 import { parseWorkout, SET_RE } from "./parser";
 import { getSuggestionContext } from "./suggest";
+import { cn } from "./utils";
 
 function useWorkoutEditor() {
 	const [text, setText] = useState("");
@@ -266,15 +267,19 @@ function App() {
 							data-testid="sync-button"
 							onClick={syncToStrava}
 							disabled={!canSync || syncStatus === "loading"}
-							className={`rounded-md px-3 py-1.5 font-sans text-sm font-medium transition-colors ${
-								syncStatus === "success"
-									? "bg-emerald-600 text-white"
-									: syncStatus === "error"
-										? "bg-red-600 text-white"
-										: canSync
-											? "bg-orange-500 text-white hover:bg-orange-600"
-											: "cursor-not-allowed bg-stone-200 text-stone-400"
-							}`}
+							className={cn(
+								"rounded-md px-3 py-1.5 font-sans text-sm font-medium transition-colors",
+								syncStatus === "success" && "bg-emerald-600 text-white",
+								syncStatus === "error" && "bg-red-600 text-white",
+								syncStatus !== "success" &&
+									syncStatus !== "error" &&
+									canSync &&
+									"bg-orange-500 text-white hover:bg-orange-600",
+								syncStatus !== "success" &&
+									syncStatus !== "error" &&
+									!canSync &&
+									"cursor-not-allowed bg-stone-200 text-stone-400",
+							)}
 						>
 							{syncLabel}
 						</button>
@@ -321,9 +326,10 @@ function App() {
 												e.preventDefault();
 												accept(i);
 											}}
-											className={`block w-full rounded px-3 py-1.5 text-left text-stone-800 hover:bg-stone-100 ${
-												i === highlight ? "bg-emerald-100" : ""
-											}`}
+											className={cn(
+												"block w-full rounded px-3 py-1.5 text-left text-stone-800 hover:bg-stone-100",
+												i === highlight && "bg-emerald-100",
+											)}
 										>
 											{c.name}
 										</button>

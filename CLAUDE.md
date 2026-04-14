@@ -47,6 +47,7 @@ Incline Bench
 * Pure frontend application powered by React and vite .
 * TypeScript / pnpm
 * Tailwind css
+* clsx + tailwind-merge (`cn()` utility in `src/utils.ts`) for conditional className composition
 * Biome formatting and linting validation
 * Playwright testing
 * Strava API https://developers.strava.com/docs/reference/
