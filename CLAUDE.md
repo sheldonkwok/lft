@@ -60,4 +60,4 @@ Incline Bench
 
 ## Development
 * Use semantic commit messages (e.g. `feat:`, `fix:`, `refactor:`, `chore:`).
-* When a remote agent is working in a worktree, it must: commit its work, push the branch to GitHub, and open a PR.
+* When an agent is working in a worktree, it must: commit its work, push the branch to GitHub, and open a PR.
