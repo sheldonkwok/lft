@@ -70,3 +70,19 @@ test("exercise name is case-insensitive", async ({ page }) => {
 	await type(page, "bench\n135x8");
 	await expect(page.getByTestId("status-valid")).toContainText("1 exercise");
 });
+
+test("exercise with no sets followed by blank line is invalid", async ({
+	page,
+}) => {
+	await type(page, "Bench\n\nIncline Bench\n135x5");
+	await expect(page.getByTestId("error-line").first()).toHaveText(
+		"Line 1: Exercise has no sets",
+	);
+});
+
+test("exercise at end of input with no sets is invalid", async ({ page }) => {
+	await type(page, "Bench");
+	await expect(page.getByTestId("error-line").first()).toHaveText(
+		"Line 1: Exercise has no sets",
+	);
+});

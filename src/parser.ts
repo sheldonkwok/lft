@@ -10,12 +10,26 @@ export type ParseResult = {
 
 export const SET_RE = /^(\d+)x(\d+)$/;
 
+function flushExercise(
+	current: ParsedExercise,
+	startLine: number,
+	exercises: ParsedExercise[],
+	errors: ParseError[],
+) {
+	if (current.sets.length === 0) {
+		errors.push({ line: startLine, message: "Exercise has no sets" });
+	} else {
+		exercises.push(current);
+	}
+}
+
 export function parseWorkout(text: string, known: Exercise[]): ParseResult {
 	const byLower = new Map(known.map((e) => [e.name.toLowerCase(), e]));
 	const exercises: ParsedExercise[] = [];
 	const errors: ParseError[] = [];
 	const used = new Set<string>();
 	let current: ParsedExercise | null = null;
+	let currentLine = 0;
 
 	const lines = text.split("\n");
 	for (let i = 0; i < lines.length; i++) {
@@ -24,7 +38,7 @@ export function parseWorkout(text: string, known: Exercise[]): ParseResult {
 
 		if (raw.trim() === "") {
 			if (current) {
-				exercises.push(current);
+				flushExercise(current, currentLine, exercises, errors);
 				current = null;
 			}
 			continue;
@@ -65,9 +79,12 @@ export function parseWorkout(text: string, known: Exercise[]): ParseResult {
 		}
 		used.add(exercise.name);
 		current = { name: exercise.name, sets: [] };
+		currentLine = lineNum;
 	}
 
-	if (current) exercises.push(current);
+	if (current) {
+		flushExercise(current, currentLine, exercises, errors);
+	}
 
 	return { exercises, errors };
 }

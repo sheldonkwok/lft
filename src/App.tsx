@@ -105,6 +105,20 @@ function useWorkoutEditor() {
 			if (!isSlot && currentLine !== "" && !SET_RE.test(currentLine)) {
 				e.preventDefault();
 				return;
+			} else if (!isSlot && currentLine === "") {
+				let hasSets = false;
+				for (let j = lineIdx - 1; j >= 0; j--) {
+					const l = lines[j].trim();
+					if (l === "") break;
+					if (SET_RE.test(l)) {
+						hasSets = true;
+						break;
+					}
+				}
+				if (!hasSets) {
+					e.preventDefault();
+					return;
+				}
 			}
 		}
 		if (!showSuggestions) return;

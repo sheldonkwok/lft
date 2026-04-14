@@ -22,7 +22,9 @@ test("clicking a suggestion completes the line", async ({ page }) => {
 	await expect(page.getByTestId("workout-input")).toHaveValue(
 		"Incline Bench\n",
 	);
-	await expect(page.getByTestId("status-valid")).toContainText("1 exercise");
+	await expect(page.getByTestId("error-line").first()).toContainText(
+		"Exercise has no sets",
+	);
 });
 
 test("used exercises are excluded", async ({ page }) => {
