@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { handle } from "hono/vercel";
 
-export const config = { runtime: "edge" };
+export const config = { runtime: "nodejs" };
 
 type Bindings = {
 	STRAVA_CLIENT_ID: string;
