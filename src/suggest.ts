@@ -1,6 +1,5 @@
 import type { Exercise } from "./exercises";
-
-const SET_RE = /^\d+x\d+$/;
+import { SET_RE } from "./parser";
 
 export type SuggestionContext = {
 	active: boolean;
