@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EXERCISES } from "./exercises";
 import { parseWorkout, SET_RE } from "./parser";
 import { getSuggestionContext } from "./suggest";
@@ -144,6 +144,8 @@ function useWorkoutEditor() {
 	};
 }
 
+type SyncStatus = "idle" | "loading" | "success" | "error";
+
 function App() {
 	const {
 		text,
@@ -161,13 +163,63 @@ function App() {
 		onKeyDown,
 	} = useWorkoutEditor();
 
+	const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
+
+	const syncToStrava = useCallback(async () => {
+		setSyncStatus("loading");
+		try {
+			const res = await fetch("/api/strava/sync", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ exercises: result.exercises }),
+			});
+			if (!res.ok) {
+				setSyncStatus("error");
+				return;
+			}
+			setSyncStatus("success");
+		} catch {
+			setSyncStatus("error");
+		}
+	}, [result.exercises]);
+
+	const canSync = valid && result.exercises.length > 0;
+
+	const syncLabel =
+		syncStatus === "loading"
+			? "Syncing..."
+			: syncStatus === "success"
+				? "Synced!"
+				: syncStatus === "error"
+					? "Error"
+					: "Sync to Strava";
+
 	return (
 		<main className="min-h-screen bg-stone-100 px-5 py-10">
 			<div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-[1fr_280px]">
 				<div>
-					<h1 className="mb-4 font-sans text-2xl font-semibold text-stone-800">
-						lft
-					</h1>
+					<div className="mb-4 flex items-center justify-between">
+						<h1 className="font-sans text-2xl font-semibold text-stone-800">
+							lft
+						</h1>
+						<button
+							type="button"
+							data-testid="sync-button"
+							onClick={syncToStrava}
+							disabled={!canSync || syncStatus === "loading"}
+							className={`rounded-md px-3 py-1.5 font-sans text-sm font-medium transition-colors ${
+								syncStatus === "success"
+									? "bg-emerald-600 text-white"
+									: syncStatus === "error"
+										? "bg-red-600 text-white"
+										: canSync
+											? "bg-orange-500 text-white hover:bg-orange-600"
+											: "cursor-not-allowed bg-stone-200 text-stone-400"
+							}`}
+						>
+							{syncLabel}
+						</button>
+					</div>
 					<div className="relative">
 						<textarea
 							ref={textareaRef}
