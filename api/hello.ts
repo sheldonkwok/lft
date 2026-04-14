@@ -7,4 +7,6 @@ app.get("/hello", (c) => {
 	return c.json({ message: "Hello World" });
 });
 
+export const config = { runtime: "edge" };
+
 export default handle(app);
