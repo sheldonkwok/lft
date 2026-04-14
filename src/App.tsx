@@ -1,15 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { EXERCISES } from "./exercises";
+import { useSuggestions } from "./hooks/useSuggestions";
 import { parseWorkout, SET_RE } from "./parser";
+import { SuggestionsPanel } from "./SuggestionsPanel";
 import { SyncButton } from "./SyncButton";
-import { getSuggestionContext } from "./suggest";
-import { cn } from "./utils";
 
 function useWorkoutEditor() {
 	const [text, setText] = useState("");
 	const [caret, setCaret] = useState(0);
-	const [highlight, setHighlight] = useState(0);
-	const [dismissed, setDismissed] = useState(false);
 	const [keyboardHeight, setKeyboardHeight] = useState(0);
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -17,10 +15,16 @@ function useWorkoutEditor() {
 	const valid = result.errors.length === 0;
 	const totalSets = result.exercises.reduce((n, e) => n + e.sets.length, 0);
 
-	const suggestions = useMemo(
-		() => getSuggestionContext(text, caret, EXERCISES),
-		[text, caret],
-	);
+	const {
+		suggestions,
+		showSuggestions,
+		highlight,
+		accept,
+		moveDown,
+		moveUp,
+		dismiss,
+		resetDismissed,
+	} = useSuggestions(text, caret, textareaRef, setText, setCaret);
 
 	const isSetContext = useMemo(() => {
 		const lines = text.split("\n");
@@ -45,12 +49,6 @@ function useWorkoutEditor() {
 		return false;
 	}, [text, caret]);
 
-	const showSuggestions = suggestions.active && !dismissed;
-
-	useEffect(() => {
-		if (highlight >= suggestions.candidates.length) setHighlight(0);
-	}, [highlight, suggestions.candidates.length]);
-
 	useEffect(() => {
 		textareaRef.current?.focus();
 	}, []);
@@ -70,34 +68,14 @@ function useWorkoutEditor() {
 	function syncCaret() {
 		const el = textareaRef.current;
 		if (el) setCaret(el.selectionStart);
-		setDismissed(false);
-	}
-
-	function accept(index: number) {
-		const choice = suggestions.candidates[index];
-		if (!choice) return;
-		const after = text.slice(suggestions.lineEnd);
-		const insert = after.startsWith("\n") ? choice.name : `${choice.name}\n`;
-		const next = text.slice(0, suggestions.lineStart) + insert + after;
-		const newCaret =
-			suggestions.lineStart + insert.length + (after.startsWith("\n") ? 1 : 0);
-		setText(next);
-		setHighlight(0);
-		requestAnimationFrame(() => {
-			const el = textareaRef.current;
-			if (el) {
-				el.focus();
-				el.setSelectionRange(newCaret, newCaret);
-				setCaret(newCaret);
-			}
-		});
+		resetDismissed();
 	}
 
 	function onChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
 		const val = e.target.value.replace(/\./g, "x");
 		setText(val);
 		setCaret(e.target.selectionStart);
-		setDismissed(false);
+		resetDismissed();
 	}
 
 	function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -139,20 +117,16 @@ function useWorkoutEditor() {
 		if (!showSuggestions) return;
 		if (e.key === "ArrowDown") {
 			e.preventDefault();
-			setHighlight((h) => (h + 1) % suggestions.candidates.length);
+			moveDown();
 		} else if (e.key === "ArrowUp") {
 			e.preventDefault();
-			setHighlight(
-				(h) =>
-					(h - 1 + suggestions.candidates.length) %
-					suggestions.candidates.length,
-			);
+			moveUp();
 		} else if (e.key === "Tab" || e.key === "Enter") {
 			e.preventDefault();
 			accept(highlight);
 		} else if (e.key === "Escape") {
 			e.preventDefault();
-			setDismissed(true);
+			dismiss();
 		}
 	}
 
@@ -227,40 +201,12 @@ function App() {
 							className="block min-h-[480px] w-full resize-y rounded-md border-l-2 border-red-300 bg-white py-2 pr-5 pl-14 font-mono text-[22px] leading-[44px] text-stone-800 shadow-md outline-none bg-[linear-gradient(to_bottom,transparent_0,transparent_43px,#bfdbfe_43px,#bfdbfe_44px)] [background-size:100%_44px] [background-attachment:local]"
 						/>
 						{showSuggestions && (
-							<ul
-								data-testid="suggestions"
-								className="flex flex-col gap-1 rounded-md border border-stone-200 bg-white p-1 font-mono text-base shadow-sm"
-								style={
-									keyboardHeight > 0
-										? {
-												position: "fixed",
-												bottom: keyboardHeight + 8,
-												left: 16,
-												right: 16,
-												zIndex: 50,
-											}
-										: { marginTop: "0.5rem" }
-								}
-							>
-								{suggestions.candidates.map((c, i) => (
-									<li key={c.name}>
-										<button
-											type="button"
-											data-testid="suggestion-item"
-											onMouseDown={(e) => {
-												e.preventDefault();
-												accept(i);
-											}}
-											className={cn(
-												"block w-full rounded px-3 py-1.5 text-left text-stone-800 hover:bg-stone-100",
-												i === highlight && "bg-emerald-100",
-											)}
-										>
-											{c.name}
-										</button>
-									</li>
-								))}
-							</ul>
+							<SuggestionsPanel
+								suggestions={suggestions}
+								highlight={highlight}
+								keyboardHeight={keyboardHeight}
+								onAccept={accept}
+							/>
 						)}
 					</div>
 				</div>
