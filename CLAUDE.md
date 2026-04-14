@@ -60,4 +60,4 @@ Incline Bench
 
 ## Development
 * Use semantic commit messages (e.g. `feat:`, `fix:`, `refactor:`, `chore:`).
-* When an agent is working in a worktree, it must: commit its work, push the branch to GitHub, and open a PR.
+* When an agent is working in a worktree, it must: commit its work, push the branch to GitHub, and open a PR. Show the link to the PR if it's created.
