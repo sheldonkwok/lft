@@ -9,6 +9,7 @@ interface SyncButtonProps {
 	text: string;
 	valid: boolean;
 	setText: (text: string) => void;
+	startTime: number | null;
 }
 
 export function SyncButton({
@@ -16,6 +17,7 @@ export function SyncButton({
 	text,
 	valid,
 	setText,
+	startTime,
 }: SyncButtonProps) {
 	const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
 	const [autoSync, setAutoSync] = useState(false);
@@ -34,6 +36,9 @@ export function SyncButton({
 		const now = new Date();
 		const pad = (n: number) => String(n).padStart(2, "0");
 		const startDateLocal = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+		const elapsedTime = startTime
+			? Math.round((Date.now() - startTime) / 1000)
+			: 3600;
 		try {
 			const res = await fetch("/api/strava/sync", {
 				method: "POST",
@@ -41,6 +46,7 @@ export function SyncButton({
 				body: JSON.stringify({
 					exercises,
 					startDateLocal,
+					elapsedTime,
 				}),
 			});
 			if (res.status === 401) {
@@ -56,7 +62,7 @@ export function SyncButton({
 		} catch {
 			setSyncStatus("error");
 		}
-	}, [exercises, text]);
+	}, [exercises, text, startTime]);
 
 	useEffect(() => {
 		if (autoSync && valid && exercises.length > 0) {

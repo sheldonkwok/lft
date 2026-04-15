@@ -24,9 +24,10 @@ app.post("/strava/sync", async (c) => {
 		return c.json({ error: "Not authenticated with Strava" }, 401);
 	}
 
-	const { exercises, startDateLocal } = await c.req.json<{
+	const { exercises, startDateLocal, elapsedTime } = await c.req.json<{
 		exercises: ParsedExercise[];
 		startDateLocal: string;
+		elapsedTime?: number;
 	}>();
 
 	const res = await fetch("https://www.strava.com/api/v3/activities", {
@@ -39,7 +40,7 @@ app.post("/strava/sync", async (c) => {
 			name: "Workout",
 			sport_type: "WeightTraining",
 			start_date_local: startDateLocal,
-			elapsed_time: 3600,
+			elapsed_time: elapsedTime ?? 3600,
 			description: formatDescription(exercises),
 			hide_from_home: true,
 			visibility: "only_me",

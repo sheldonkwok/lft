@@ -15,6 +15,15 @@ function useWorkoutEditor() {
 	const valid = result.errors.length === 0;
 	const totalSets = result.exercises.reduce((n, e) => n + e.sets.length, 0);
 
+	const [workoutStartTime, setWorkoutStartTime] = useState<number | null>(null);
+	useEffect(() => {
+		if (totalSets > 0 && workoutStartTime === null) {
+			setWorkoutStartTime(Date.now());
+		} else if (totalSets === 0) {
+			setWorkoutStartTime(null);
+		}
+	}, [totalSets, workoutStartTime]);
+
 	const {
 		suggestions,
 		showSuggestions,
@@ -136,6 +145,7 @@ function useWorkoutEditor() {
 		result,
 		valid,
 		totalSets,
+		workoutStartTime,
 		suggestions,
 		showSuggestions,
 		isSetContext,
@@ -156,6 +166,7 @@ function App() {
 		result,
 		valid,
 		totalSets,
+		workoutStartTime,
 		suggestions,
 		showSuggestions,
 		isSetContext,
@@ -181,6 +192,7 @@ function App() {
 							text={text}
 							valid={valid}
 							setText={setText}
+							startTime={workoutStartTime}
 						/>
 					</div>
 					<div className="relative">

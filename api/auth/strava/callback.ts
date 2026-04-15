@@ -5,14 +5,7 @@ import { handle } from "hono/vercel";
 
 export const config = { runtime: "nodejs" };
 
-type Bindings = {
-	STRAVA_CLIENT_ID: string;
-	STRAVA_CLIENT_SECRET: string;
-	STRAVA_REDIRECT_URI: string;
-	NODE_ENV: string;
-};
-
-export const app = new Hono<{ Bindings: Bindings }>().basePath("/api");
+export const app = new Hono().basePath("/api");
 
 app.get("/auth/strava/callback", async (c) => {
 	const storedState = getCookie(c, "strava_oauth_state");
@@ -25,9 +18,9 @@ app.get("/auth/strava/callback", async (c) => {
 	deleteCookie(c, "strava_oauth_state", { path: "/" });
 
 	const strava = new Strava(
-		c.env.STRAVA_CLIENT_ID,
-		c.env.STRAVA_CLIENT_SECRET,
-		c.env.STRAVA_REDIRECT_URI,
+		process.env.STRAVA_CLIENT_ID!,
+		process.env.STRAVA_CLIENT_SECRET!,
+		process.env.STRAVA_REDIRECT_URI!,
 	);
 
 	try {
@@ -35,7 +28,7 @@ app.get("/auth/strava/callback", async (c) => {
 
 		const cookieOptions = {
 			httpOnly: true,
-			secure: c.env.NODE_ENV === "production",
+			secure: process.env.NODE_ENV === "production",
 			sameSite: "Lax" as const,
 			path: "/",
 			maxAge: 60 * 60 * 24 * 30, // 30 days
