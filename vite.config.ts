@@ -14,12 +14,16 @@ function honoDevPlugin(): Plugin {
 				"./api/auth/strava/callback.ts"
 			);
 			const { app: stravaSync } = await import("./api/strava/sync.ts");
+			const { app: stravaActivities } = await import(
+				"./api/strava/activities.ts"
+			);
 
 			const app = new Hono();
 			app.route("/", hello);
 			app.route("/", stravaAuth);
 			app.route("/", stravaCallback);
 			app.route("/", stravaSync);
+			app.route("/", stravaActivities);
 
 			const handler = getRequestListener(app.fetch);
 			server.middlewares.use((req, res, next) => {

@@ -1,4 +1,5 @@
-## App
+# App
+## Workout (Home Page)
 ### Constructs
 * Recreate the vibe of logging workouts in notebooks. 
 * Workouts will be logged in plain text.
@@ -43,7 +44,14 @@ Incline Bench
 185x8
 185x8
 
-## Architecture
+## Intervals
+### Goal
+* Track different types of interval runs from Strava and group them together
+* An interval is a period of fast paced running followed by slow paced running. At least 30% faster.
+* Intervals can be based on specific times or consistent distance.
+* The only time based interval we'll support at the start is 4 minutes.
+
+# Architecture
 * Pure frontend application powered by React and vite .
 * TypeScript / pnpm
 * Tailwind css
@@ -52,6 +60,6 @@ Incline Bench
 * Playwright testing
 * Strava API https://developers.strava.com/docs/reference/
 
-## Development
+# Development
 * Use semantic commit messages (e.g. `feat:`, `fix:`, `refactor:`, `chore:`).
 * When an agent is working in a worktree, it must: commit its work, push the branch to GitHub, and open a PR. Show the link to the PR if it's created.
