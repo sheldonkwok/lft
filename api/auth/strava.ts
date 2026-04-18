@@ -9,9 +9,9 @@ export const app = new Hono().basePath("/api");
 
 app.get("/auth/strava", (c) => {
 	const strava = new Strava(
-		process.env.STRAVA_CLIENT_ID!,
-		process.env.STRAVA_CLIENT_SECRET!,
-		process.env.STRAVA_REDIRECT_URI!,
+		process.env.STRAVA_CLIENT_ID ?? "",
+		process.env.STRAVA_CLIENT_SECRET ?? "",
+		process.env.STRAVA_REDIRECT_URI ?? "",
 	);
 	const state = generateState();
 	const url = strava.createAuthorizationURL(state, [

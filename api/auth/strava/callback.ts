@@ -18,9 +18,9 @@ app.get("/auth/strava/callback", async (c) => {
 	deleteCookie(c, "strava_oauth_state", { path: "/" });
 
 	const strava = new Strava(
-		process.env.STRAVA_CLIENT_ID!,
-		process.env.STRAVA_CLIENT_SECRET!,
-		process.env.STRAVA_REDIRECT_URI!,
+		process.env.STRAVA_CLIENT_ID ?? "",
+		process.env.STRAVA_CLIENT_SECRET ?? "",
+		process.env.STRAVA_REDIRECT_URI ?? "",
 	);
 
 	try {

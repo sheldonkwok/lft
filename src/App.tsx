@@ -6,7 +6,7 @@ import { SuggestionsPanel } from "./SuggestionsPanel";
 import { SyncButton } from "./SyncButton";
 
 function useWorkoutEditor() {
-	const [text, setText] = useState("");
+	const [text, setText] = useState(() => localStorage.getItem("workout") ?? "");
 	const [caret, setCaret] = useState(0);
 	const [keyboardHeight, setKeyboardHeight] = useState(0);
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -23,6 +23,12 @@ function useWorkoutEditor() {
 			setWorkoutStartTime(null);
 		}
 	}, [totalSets, workoutStartTime]);
+
+	useEffect(() => {
+		if (valid && result.exercises.length > 0) {
+			localStorage.setItem("workout", text);
+		}
+	}, [valid, text, result.exercises.length]);
 
 	const {
 		suggestions,
