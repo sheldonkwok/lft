@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import { handle } from "hono/vercel";
-import { getValidStravaToken } from "../lib/strava";
+import { getValidStravaToken } from "../lib/strava.js";
 
-export const config = { runtime: "edge" };
+export const config = { runtime: "nodejs" };
 
 export const app = new Hono().basePath("/api");
 

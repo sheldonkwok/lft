@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { handle } from "hono/vercel";
 import { getValidStravaToken } from "../../../lib/strava";
 
-export const config = { runtime: "edge" };
+export const config = { runtime: "nodejs" };
 
 export const app = new Hono().basePath("/api");
 

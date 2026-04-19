@@ -59,6 +59,7 @@ Incline Bench
 * Biome formatting and linting validation
 * Playwright testing
 * Strava API https://developers.strava.com/docs/reference/
+* Vercel deployments. Use nodejs engine runtime for all routes.
 
 # Development
 * Use semantic commit messages (e.g. `feat:`, `fix:`, `refactor:`, `chore:`).
