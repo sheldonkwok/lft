@@ -8,7 +8,6 @@ function honoDevPlugin(): Plugin {
     async configureServer(server) {
       const { getRequestListener } = await import("@hono/node-server");
       const { Hono } = await import("hono");
-      const { app: hello } = await import("./api/hello.ts");
       const { app: stravaAuth } = await import("./api/auth/strava.ts");
       const { app: stravaCallback } = await import(
         "./api/auth/strava/callback.ts"
@@ -22,7 +21,6 @@ function honoDevPlugin(): Plugin {
       );
 
       const app = new Hono();
-      app.route("/", hello);
       app.route("/", stravaAuth);
       app.route("/", stravaCallback);
       app.route("/", stravaSync);
