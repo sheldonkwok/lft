@@ -40,6 +40,10 @@ function formatDate(iso: string): string {
   });
 }
 
+function avgSpeed(laps: Lap[]): number {
+  return laps.reduce((sum, l) => sum + l.average_speed, 0) / laps.length;
+}
+
 function formatPace(metersPerSecond: number): string {
   if (metersPerSecond <= 0) return "—";
   const secondsPerMile = 1609.344 / metersPerSecond;
@@ -168,6 +172,17 @@ export default function IntervalsPage() {
                         </li>
                       ))}
                     </ul>
+                    <div className="mt-2 pt-2 border-t border-zinc-800 text-xs flex gap-6 items-baseline">
+                      <span className="text-zinc-500 w-8" />
+                      <span className="text-zinc-400 w-12">avg</span>
+                      <span className="text-zinc-300 w-20">
+                        {formatPace(avgSpeed(pairs.map((p) => p.fast)))}
+                      </span>
+                      <span className="text-zinc-600 w-16">rest avg</span>
+                      <span className="text-zinc-500">
+                        {formatPace(avgSpeed(pairs.map((p) => p.rest)))}
+                      </span>
+                    </div>
                   </li>
                 ))}
               </ul>
