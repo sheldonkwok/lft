@@ -1049,25 +1049,18 @@ export default function IntervalsPage() {
   const { isCompact, isNarrow } = useViewport();
 
   useEffect(() => {
-    fetch("/api/strava/activities")
-      .then(async (res) => {
-        if (res.status === 401) {
-          window.location.href = "/api/auth/strava";
-          return;
-        }
-        if (!res.ok) throw new Error("Failed to fetch");
-        const data: Activity[] = await res.json();
-        const runs = data.filter((a) => a.sport_type === "Run");
-        setActivities(runs);
-        setStatus("done");
-
-        const initialLoading: Record<number, LapState> = Object.fromEntries(
-          data.map((a) => [a.id, "loading" as LapState]),
-        );
-        setLapsMap(initialLoading);
-
-        for (let i = 0; i < data.length; i += 5) {
-          const batch = data.slice(i, i + 5);
+    async function loadActivities() {
+      const fetchLaps = async (activities: Activity[]) => {
+        setLapsMap((prev) => ({
+          ...prev,
+          ...Object.fromEntries(
+            activities
+              .filter((a) => !(a.id in prev))
+              .map((a) => [a.id, "loading" as LapState]),
+          ),
+        }));
+        for (let i = 0; i < activities.length; i += 5) {
+          const batch = activities.slice(i, i + 5);
           await Promise.all(
             batch.map(async (a) => {
               try {
@@ -1088,8 +1081,37 @@ export default function IntervalsPage() {
             }),
           );
         }
-      })
-      .catch(() => setStatus("error"));
+      };
+
+      try {
+        let page = 1;
+        while (true) {
+          const res = await fetch(`/api/strava/activities?page=${page}`);
+          if (res.status === 401) {
+            window.location.href = "/api/auth/strava";
+            return;
+          }
+          if (!res.ok) throw new Error("Failed to fetch");
+          const data: Activity[] = await res.json();
+          if (!Array.isArray(data) || data.length === 0) break;
+
+          const runs = data.filter((a) => a.sport_type === "Run");
+          setActivities((prev) => {
+            const existingIds = new Set(prev.map((a) => a.id));
+            return [...prev, ...runs.filter((a) => !existingIds.has(a.id))];
+          });
+          if (page === 1) setStatus("done");
+
+          fetchLaps(runs);
+          page++;
+        }
+        if (page === 1) setStatus("done");
+      } catch {
+        setStatus("error");
+      }
+    }
+
+    loadActivities();
   }, []);
 
   const groups = buildGroups(activities, lapsMap);
