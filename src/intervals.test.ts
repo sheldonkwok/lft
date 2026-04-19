@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { detect4x4, type Lap } from "./intervals";
+import { detect4x4, detectDistanceInterval, type Lap } from "./intervals";
 
 function makeLap(index: number, movingTime: number, avgSpeed: number): Lap {
   return {
@@ -135,5 +135,110 @@ describe("detect4x4", () => {
       restLap(10),
     ];
     expect(detect4x4(laps)).toBeNull();
+  });
+});
+
+const DIST_FAST_SPEED = 5.0;
+const DIST_SLOW_SPEED = DIST_FAST_SPEED / 1.35; // >30% slower
+const DIST_METERS = 400;
+
+function distFastLap(index: number, distance = DIST_METERS): Lap {
+  return {
+    lap_index: index,
+    distance,
+    moving_time: Math.round(distance / DIST_FAST_SPEED),
+    average_speed: DIST_FAST_SPEED,
+    average_cadence: 180,
+  };
+}
+
+function distRestLap(index: number): Lap {
+  return {
+    lap_index: index,
+    distance: 200,
+    moving_time: Math.round(200 / DIST_SLOW_SPEED),
+    average_speed: DIST_SLOW_SPEED,
+    average_cadence: 160,
+  };
+}
+
+describe("detectDistanceInterval", () => {
+  it("detects a valid distance interval with 2+ pairs", () => {
+    const laps = [
+      distFastLap(1),
+      distRestLap(2),
+      distFastLap(3),
+      distRestLap(4),
+      distFastLap(5),
+      distRestLap(6),
+    ];
+    const result = detectDistanceInterval(laps);
+    expect(result).not.toBeNull();
+    expect(result?.pairs.length).toBe(3);
+    expect(result?.distance).toBeCloseTo(DIST_METERS, 0);
+  });
+
+  it("returns null for only 1 pair", () => {
+    const laps = [distFastLap(1), distRestLap(2)];
+    expect(detectDistanceInterval(laps)).toBeNull();
+  });
+
+  it("returns null when fast-lap distances exceed 5% variance", () => {
+    const laps = [
+      distFastLap(1, 400),
+      distRestLap(2),
+      distFastLap(3, 450), // 12.5% larger — outside 5% buffer
+      distRestLap(4),
+      distFastLap(5, 400),
+      distRestLap(6),
+    ];
+    expect(detectDistanceInterval(laps)).toBeNull();
+  });
+
+  it("returns null when speed difference is less than 30%", () => {
+    const tooFastRest: Lap = {
+      lap_index: 2,
+      distance: 200,
+      moving_time: 50,
+      average_speed: DIST_FAST_SPEED / 1.2, // only 20% slower
+      average_cadence: 170,
+    };
+    const laps = [
+      distFastLap(1),
+      tooFastRest,
+      distFastLap(3),
+      distRestLap(4),
+      distFastLap(5),
+      distRestLap(6),
+    ];
+    // First pair fails speed check → only 2 valid pairs remaining
+    const result = detectDistanceInterval(laps);
+    expect(result?.pairs.length).toBe(2);
+  });
+
+  it("ignores warmup/cooldown that don't meet speed threshold", () => {
+    const warmup: Lap = {
+      lap_index: 0,
+      distance: 800,
+      moving_time: 300,
+      average_speed: 2.5, // slow warmup — not fast enough to pair
+      average_cadence: 150,
+    };
+    const laps = [
+      warmup,
+      distFastLap(1),
+      distRestLap(2),
+      distFastLap(3),
+      distRestLap(4),
+      distFastLap(5),
+      distRestLap(6),
+    ];
+    const result = detectDistanceInterval(laps);
+    expect(result).not.toBeNull();
+    expect(result?.pairs.length).toBe(3);
+  });
+
+  it("returns null for an empty lap list", () => {
+    expect(detectDistanceInterval([])).toBeNull();
   });
 });

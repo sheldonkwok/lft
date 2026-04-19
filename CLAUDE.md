@@ -49,7 +49,8 @@ Incline Bench
 * Track different types of interval runs from Strava and group them together
 * An interval is a workout with repeating fast laps followed by slow laps. At least 30% faster.
 * Intervals can be based on specific times or consistent distance.
-* The only time based interval we'll support at the start is 4 minutes.
+* 4x4 is an interval workout with 4 sets of 4 minute sprints with rest after
+* Consistent distances can also be an interval run. Distance intervals can have varying number of reps. The distances for an interval should be within 5% within a run. Group distance intervals by the distance.
 
 # Architecture
 * Pure frontend application powered by React and vite .
