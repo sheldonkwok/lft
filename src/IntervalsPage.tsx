@@ -6,6 +6,7 @@ type Activity = {
   distance: number;
   moving_time: number;
   start_date_local: string;
+  sport_type: string;
 };
 
 type Lap = {
@@ -73,7 +74,8 @@ export default function IntervalsPage() {
         }
         if (!res.ok) throw new Error("Failed to fetch");
         const data: Activity[] = await res.json();
-        setActivities(data);
+        const runs = data.filter((a) => a.sport_type === "Run");
+        setActivities(runs);
         setStatus("done");
 
         // Fetch laps in batches of 5
