@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { detect4x4, detectDistanceInterval, type Lap } from "./intervals";
+import {
+  type Activity,
+  buildGroups,
+  detect4x4,
+  detectDistanceInterval,
+  distanceBucket,
+  type Lap,
+} from "./intervals";
 
 function makeLap(index: number, movingTime: number, avgSpeed: number): Lap {
   return {
@@ -240,5 +247,122 @@ describe("detectDistanceInterval", () => {
 
   it("returns null for an empty lap list", () => {
     expect(detectDistanceInterval([])).toBeNull();
+  });
+});
+
+// ─── distanceBucket ───────────────────────────────────────────────────────────
+
+describe("distanceBucket", () => {
+  it("rounds sub-1000m distances to nearest 50", () => {
+    expect(distanceBucket(800)).toBe(800);
+    expect(distanceBucket(825)).toBe(850);
+  });
+
+  it("rounds distances >= 1000m to nearest 100", () => {
+    expect(distanceBucket(1234)).toBe(1200);
+    expect(distanceBucket(1789)).toBe(1800);
+  });
+});
+
+// ─── buildGroups ──────────────────────────────────────────────────────────────
+
+function makeActivity(id: number, date: string): Activity {
+  return {
+    id,
+    name: `Run ${id}`,
+    distance: 8000,
+    moving_time: 2400,
+    start_date_local: date,
+    sport_type: "Run",
+  };
+}
+
+const VALID_4x4_LAPS = VALID_4x4;
+
+function makeDistanceLapsForGroup(n: number): Lap[] {
+  const laps: Lap[] = [];
+  for (let i = 0; i < n; i++) {
+    laps.push(distFastLap(i * 2));
+    laps.push(distRestLap(i * 2 + 1));
+  }
+  return laps;
+}
+
+describe("buildGroups", () => {
+  it("returns empty array for no activities", () => {
+    expect(buildGroups([], {})).toEqual([]);
+  });
+
+  it("skips activities with no laps entry", () => {
+    expect(buildGroups([makeActivity(1, "2026-03-01T08:00:00Z")], {})).toEqual(
+      [],
+    );
+  });
+
+  it("skips activities whose laps form no interval", () => {
+    const laps: Lap[] = [makeLap(0, 1800, 2.8)];
+    expect(
+      buildGroups([makeActivity(1, "2026-03-01T08:00:00Z")], { 1: laps }),
+    ).toEqual([]);
+  });
+
+  it("builds a 4x4 group from a single activity", () => {
+    const groups = buildGroups([makeActivity(1, "2026-03-01T08:00:00Z")], {
+      1: VALID_4x4_LAPS,
+    });
+    expect(groups).toHaveLength(1);
+    expect(groups[0].id).toBe("4x4");
+    expect(groups[0].title).toBe("4×4 Intervals");
+    expect(groups[0].sessions[0].repCount).toBe(4);
+  });
+
+  it("groups two 4x4 activities together, sorted oldest first", () => {
+    const a1 = makeActivity(1, "2026-03-01T08:00:00Z");
+    const a2 = makeActivity(2, "2026-03-15T08:00:00Z");
+    const groups = buildGroups([a2, a1], {
+      1: VALID_4x4_LAPS,
+      2: VALID_4x4_LAPS,
+    });
+    expect(groups).toHaveLength(1);
+    expect(groups[0].sessions).toHaveLength(2);
+    expect(groups[0].sessions[0].id).toBe(1);
+    expect(groups[0].sessions[1].id).toBe(2);
+  });
+
+  it("builds a distance group from a single activity", () => {
+    const groups = buildGroups([makeActivity(1, "2026-03-01T08:00:00Z")], {
+      1: makeDistanceLapsForGroup(3),
+    });
+    expect(groups).toHaveLength(1);
+    expect(groups[0].id).toBe(`dist_${distanceBucket(DIST_METERS)}`);
+    expect(groups[0].title).toMatch(/Repeats$/);
+  });
+
+  it("creates separate groups for 4x4 and distance activities", () => {
+    const groups = buildGroups(
+      [
+        makeActivity(1, "2026-03-01T08:00:00Z"),
+        makeActivity(2, "2026-03-15T08:00:00Z"),
+      ],
+      { 1: VALID_4x4_LAPS, 2: makeDistanceLapsForGroup(3) },
+    );
+    expect(groups).toHaveLength(2);
+  });
+
+  it("sorts groups by session count descending", () => {
+    const groups = buildGroups(
+      [
+        makeActivity(1, "2026-03-01T08:00:00Z"),
+        makeActivity(2, "2026-03-08T08:00:00Z"),
+        makeActivity(3, "2026-03-15T08:00:00Z"),
+      ],
+      {
+        1: VALID_4x4_LAPS,
+        2: VALID_4x4_LAPS,
+        3: makeDistanceLapsForGroup(3),
+      },
+    );
+    expect(groups[0].id).toBe("4x4");
+    expect(groups[1].id).toBe(`dist_${distanceBucket(DIST_METERS)}`);
   });
 });
