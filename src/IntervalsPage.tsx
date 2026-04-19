@@ -150,7 +150,7 @@ export default function IntervalsPage() {
                       {pairs.map(({ fast, rest }, i) => (
                         <li
                           key={fast.lap_index}
-                          className="text-xs flex gap-6 items-baseline"
+                          className="text-xs flex gap-6 items-baseline whitespace-nowrap"
                         >
                           <span className="text-zinc-500 w-8">{i + 1}</span>
                           <span className="text-white w-12">
