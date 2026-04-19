@@ -8,6 +8,6 @@ const root = document.getElementById("root");
 if (!root) throw new Error("Root element not found");
 
 const page =
-	window.location.pathname === "/intervals" ? <IntervalsPage /> : <App />;
+  window.location.pathname === "/intervals" ? <IntervalsPage /> : <App />;
 
 createRoot(root).render(<StrictMode>{page}</StrictMode>);
