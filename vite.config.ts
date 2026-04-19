@@ -17,6 +17,9 @@ function honoDevPlugin(): Plugin {
 			const { app: stravaActivities } = await import(
 				"./api/strava/activities.ts"
 			);
+			const { app: stravaActivityLaps } = await import(
+				"./api/strava/activities/[id]/laps.ts"
+			);
 
 			const app = new Hono();
 			app.route("/", hello);
@@ -24,6 +27,7 @@ function honoDevPlugin(): Plugin {
 			app.route("/", stravaCallback);
 			app.route("/", stravaSync);
 			app.route("/", stravaActivities);
+			app.route("/", stravaActivityLaps);
 
 			const handler = getRequestListener(app.fetch);
 			server.middlewares.use((req, res, next) => {

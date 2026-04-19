@@ -9,8 +9,8 @@ pnpm tsc -b || exit 2
 pnpm vite build || exit 2
 
 echo "==> lint"
-pnpm biome check --error-on-warnings . || exit 2
 pnpm biome format --write . || exit 2
+pnpm biome check --error-on-warnings . || exit 2
 
 echo "==> test"
 pnpm playwright test || exit 2
