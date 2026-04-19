@@ -36,6 +36,12 @@ app.get("/auth/strava/callback", async (c) => {
 
 		setCookie(c, "strava_access_token", tokens.accessToken(), cookieOptions);
 		setCookie(c, "strava_refresh_token", tokens.refreshToken(), cookieOptions);
+		setCookie(
+			c,
+			"strava_token_expiry",
+			tokens.accessTokenExpiresAt().getTime().toString(),
+			cookieOptions,
+		);
 
 		return c.redirect("/");
 	} catch (e) {

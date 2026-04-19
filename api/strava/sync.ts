@@ -1,6 +1,6 @@
 import { Hono } from "hono";
-import { getCookie } from "hono/cookie";
 import { handle } from "hono/vercel";
+import { getValidStravaToken } from "../lib/strava";
 
 export const config = { runtime: "edge" };
 
@@ -19,7 +19,7 @@ function formatDescription(exercises: ParsedExercise[]): string {
 }
 
 app.post("/strava/sync", async (c) => {
-	const token = getCookie(c, "strava_access_token");
+	const token = await getValidStravaToken(c);
 	if (!token) {
 		return c.json({ error: "Not authenticated with Strava" }, 401);
 	}

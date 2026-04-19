@@ -1,13 +1,13 @@
 import { Hono } from "hono";
-import { getCookie } from "hono/cookie";
 import { handle } from "hono/vercel";
+import { getValidStravaToken } from "../lib/strava";
 
 export const config = { runtime: "edge" };
 
 export const app = new Hono().basePath("/api");
 
 app.get("/strava/activities", async (c) => {
-	const token = getCookie(c, "strava_access_token");
+	const token = await getValidStravaToken(c);
 	if (!token) {
 		return c.json({ error: "Not authenticated with Strava" }, 401);
 	}
