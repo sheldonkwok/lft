@@ -47,7 +47,7 @@ Incline Bench
 ## Intervals
 ### Goal
 * Track different types of interval runs from Strava and group them together
-* An interval is a period of fast paced running followed by slow paced running. At least 30% faster.
+* An interval is a workout with repeating fast laps followed by slow laps. At least 30% faster.
 * Intervals can be based on specific times or consistent distance.
 * The only time based interval we'll support at the start is 4 minutes.
 

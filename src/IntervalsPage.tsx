@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { detect4x4, type IntervalPair, type Lap } from "./intervals";
 
 type Activity = {
   id: number;
@@ -9,15 +10,13 @@ type Activity = {
   sport_type: string;
 };
 
-type Lap = {
-  lap_index: number;
-  distance: number;
-  moving_time: number;
-  average_speed: number;
-  average_cadence: number;
-};
-
 type LapState = Lap[] | "loading" | "error";
+
+type IntervalGroup = {
+  type: "4x4";
+  activity: Activity;
+  pairs: IntervalPair[];
+};
 
 function formatDistance(meters: number): string {
   const miles = meters / 1609.344;
@@ -78,7 +77,6 @@ export default function IntervalsPage() {
         setActivities(runs);
         setStatus("done");
 
-        // Fetch laps in batches of 5
         const initialLoading = Object.fromEntries(
           data.map((a) => [a.id, "loading" as LapState]),
         );
@@ -101,6 +99,21 @@ export default function IntervalsPage() {
       .catch(() => setStatus("error"));
   }, []);
 
+  const intervalGroups: IntervalGroup[] = [];
+  const groupedIds = new Set<number>();
+
+  for (const activity of activities) {
+    const lapState = lapsMap[activity.id];
+    if (!Array.isArray(lapState)) continue;
+    const pairs = detect4x4(lapState);
+    if (pairs) {
+      intervalGroups.push({ type: "4x4", activity, pairs });
+      groupedIds.add(activity.id);
+    }
+  }
+
+  const ungroupedActivities = activities.filter((a) => !groupedIds.has(a.id));
+
   return (
     <div className="min-h-screen bg-black text-white font-mono p-6">
       <h1 className="text-xl font-bold mb-6">Recent Runs</h1>
@@ -111,53 +124,121 @@ export default function IntervalsPage() {
         <p className="text-red-400">Failed to load activities.</p>
       )}
 
-      {status === "done" && activities.length === 0 && (
-        <p className="text-zinc-400">No recent runs found.</p>
-      )}
-
-      {status === "done" && activities.length > 0 && (
-        <ul className="space-y-3">
-          {activities.map((a) => {
-            const lapState = lapsMap[a.id];
-            return (
-              <li key={a.id} className="border border-zinc-800 rounded p-4">
-                <div className="font-bold">{a.name}</div>
-                <div className="text-zinc-400 text-sm mt-1">
-                  {formatDate(a.start_date_local)} &middot;{" "}
-                  {formatDistance(a.distance)} &middot;{" "}
-                  {formatTime(a.moving_time)}
-                </div>
-
-                <div className="mt-3 border-t border-zinc-800 pt-3">
-                  {lapState === "loading" && (
-                    <p className="text-zinc-500 text-xs">Loading laps...</p>
-                  )}
-                  {lapState === "error" && (
-                    <p className="text-red-400 text-xs">Failed to load laps.</p>
-                  )}
-                  {Array.isArray(lapState) && (
+      {status === "done" && (
+        <>
+          {intervalGroups.length > 0 && (
+            <section className="mb-8">
+              <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest mb-3">
+                Grouped Intervals
+              </h2>
+              <ul className="space-y-3">
+                {intervalGroups.map(({ activity, pairs, type }) => (
+                  <li
+                    key={activity.id}
+                    className="border border-zinc-700 rounded p-4"
+                  >
+                    <div className="flex items-baseline gap-3 mb-3">
+                      <span className="text-xs font-bold text-emerald-400 uppercase tracking-widest">
+                        {type}
+                      </span>
+                      <span className="font-bold">{activity.name}</span>
+                      <span className="text-zinc-400 text-sm">
+                        {formatDate(activity.start_date_local)}
+                      </span>
+                    </div>
                     <ul className="space-y-1">
-                      {lapState.map((lap) => (
+                      {pairs.map(({ fast, rest }, i) => (
                         <li
-                          key={lap.lap_index}
-                          className="text-zinc-300 text-xs flex gap-4"
+                          key={fast.lap_index}
+                          className="text-xs flex gap-6 items-baseline"
                         >
-                          <span className="text-zinc-500 w-12">
-                            Lap {lap.lap_index}
+                          <span className="text-zinc-500 w-8">{i + 1}</span>
+                          <span className="text-white w-12">
+                            {formatTime(fast.moving_time)}
                           </span>
-                          <span>{formatDistance(lap.distance)}</span>
-                          <span>{formatTime(lap.moving_time)}</span>
-                          <span>{formatPace(lap.average_speed)}</span>
-                          <span>{Math.round(lap.average_cadence)} spm</span>
+                          <span className="text-zinc-300 w-20">
+                            {formatPace(fast.average_speed)}
+                          </span>
+                          <span className="text-zinc-600 w-16">
+                            rest {formatTime(rest.moving_time)}
+                          </span>
+                          <span className="text-zinc-500">
+                            {formatPace(rest.average_speed)}
+                          </span>
                         </li>
                       ))}
                     </ul>
-                  )}
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {ungroupedActivities.length > 0 && (
+            <section>
+              {intervalGroups.length > 0 && (
+                <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest mb-3">
+                  Other Runs
+                </h2>
+              )}
+              <ul className="space-y-3">
+                {ungroupedActivities.map((a) => {
+                  const lapState = lapsMap[a.id];
+                  return (
+                    <li
+                      key={a.id}
+                      className="border border-zinc-800 rounded p-4"
+                    >
+                      <div className="font-bold">{a.name}</div>
+                      <div className="text-zinc-400 text-sm mt-1">
+                        {formatDate(a.start_date_local)} &middot;{" "}
+                        {formatDistance(a.distance)} &middot;{" "}
+                        {formatTime(a.moving_time)}
+                      </div>
+
+                      <div className="mt-3 border-t border-zinc-800 pt-3">
+                        {lapState === "loading" && (
+                          <p className="text-zinc-500 text-xs">
+                            Loading laps...
+                          </p>
+                        )}
+                        {lapState === "error" && (
+                          <p className="text-red-400 text-xs">
+                            Failed to load laps.
+                          </p>
+                        )}
+                        {Array.isArray(lapState) && (
+                          <ul className="space-y-1">
+                            {lapState.map((lap) => (
+                              <li
+                                key={lap.lap_index}
+                                className="text-zinc-300 text-xs flex gap-4"
+                              >
+                                <span className="text-zinc-500 w-12">
+                                  Lap {lap.lap_index}
+                                </span>
+                                <span>{formatDistance(lap.distance)}</span>
+                                <span>{formatTime(lap.moving_time)}</span>
+                                <span>{formatPace(lap.average_speed)}</span>
+                                <span>
+                                  {Math.round(lap.average_cadence)} spm
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          )}
+
+          {activities.length === 0 && (
+            <p className="text-zinc-400">No recent runs found.</p>
+          )}
+        </>
       )}
     </div>
   );
