@@ -43,27 +43,29 @@ export type WorkoutGroup = {
   sessions: WorkoutSession[]; // oldest → newest
 };
 
-const FOUR_MIN = 240;
-const TIME_BUFFER = 0.03;
+const MIN_TIME = 235; // 3m55s
+const MAX_TIME = 270; // 4m30s
 const SPEED_THRESHOLD = 1.3;
 const DISTANCE_BUFFER = 0.05;
-
-const MIN_TIME = FOUR_MIN * (1 - TIME_BUFFER);
-const MAX_TIME = FOUR_MIN * (1 + TIME_BUFFER);
+const DISTANCE_BUFFER_ABS = 50; // 0.05km in meters
 
 function isFastLap(lap: Lap): boolean {
   return lap.moving_time >= MIN_TIME && lap.moving_time <= MAX_TIME;
 }
 
-export function detect4x4(laps: Lap[]): IntervalPair[] | null {
+export function detect4x4(
+  laps: Lap[],
+  skipTimeCheck = false,
+): IntervalPair[] | null {
   const pairs: IntervalPair[] = [];
 
   for (let i = 0; i < laps.length; i++) {
     const lap = laps[i];
-    if (!isFastLap(lap)) continue;
+    if (!skipTimeCheck && !isFastLap(lap)) continue;
 
     const next = laps[i + 1];
-    if (!next || isFastLap(next)) continue;
+    if (!next) continue;
+    if (!skipTimeCheck && isFastLap(next)) continue;
 
     if (lap.average_speed < next.average_speed * SPEED_THRESHOLD) continue;
 
@@ -88,12 +90,14 @@ export function detectDistanceInterval(
     }
   }
 
-  if (pairs.length < 2) return null;
+  if (pairs.length < 3) return null;
 
   const distances = pairs.map((p) => p.fast.distance);
   const mean = distances.reduce((a, b) => a + b, 0) / distances.length;
   const allConsistent = distances.every(
-    (d) => Math.abs(d - mean) / mean <= DISTANCE_BUFFER,
+    (d) =>
+      Math.abs(d - mean) / mean <= DISTANCE_BUFFER ||
+      Math.abs(d - mean) <= DISTANCE_BUFFER_ABS,
   );
 
   if (!allConsistent) return null;
@@ -126,7 +130,10 @@ export function buildGroups(
     let pairs: IntervalPair[];
     let distance: number | undefined;
 
-    const pairs4x4 = detect4x4(activityLaps);
+    const nameIs4x4 = activity.name.toLowerCase().includes("4x4");
+    const pairs4x4 =
+      detect4x4(activityLaps) ??
+      (nameIs4x4 ? detect4x4(activityLaps, true) : null);
     if (pairs4x4) {
       groupId = "4x4";
       type = "4x4";

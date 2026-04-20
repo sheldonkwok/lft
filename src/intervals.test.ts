@@ -92,7 +92,7 @@ describe("detect4x4", () => {
   });
 
   it("returns null when fast laps are outside the time buffer", () => {
-    const tooLong = makeLap(1, 248, FAST_SPEED); // 248s > 247.2s threshold
+    const tooLong = makeLap(1, 271, FAST_SPEED); // 271s > 270s threshold
     const laps = [
       tooLong,
       restLap(2),
@@ -107,8 +107,8 @@ describe("detect4x4", () => {
   });
 
   it("accepts fast laps at the edge of the time buffer", () => {
-    const edgeLow = makeLap(1, 233, FAST_SPEED); // 240 * 0.97 ≈ 232.8 → 233 is valid
-    const edgeHigh = makeLap(5, 247, FAST_SPEED); // 240 * 1.03 ≈ 247.2 → 247 is valid
+    const edgeLow = makeLap(1, 235, FAST_SPEED); // 235s = MIN_TIME, valid
+    const edgeHigh = makeLap(5, 270, FAST_SPEED); // 270s = MAX_TIME, valid
     const laps = [
       edgeLow,
       restLap(2),
@@ -142,6 +142,44 @@ describe("detect4x4", () => {
       restLap(10),
     ];
     expect(detect4x4(laps)).toBeNull();
+  });
+
+  it("detects 4 pairs with skipTimeCheck even when laps are outside the time window", () => {
+    const outsideWindow = makeLap(1, 300, FAST_SPEED); // 300s > MAX_TIME
+    const laps = [
+      outsideWindow,
+      restLap(2),
+      outsideWindow,
+      restLap(4),
+      outsideWindow,
+      restLap(6),
+      outsideWindow,
+      restLap(8),
+    ];
+    const result = detect4x4(laps, true);
+    expect(result).not.toBeNull();
+    expect(result?.length).toBe(4);
+  });
+
+  it("still requires exactly 4 pairs with skipTimeCheck", () => {
+    const outsideWindow = makeLap(1, 300, FAST_SPEED);
+    const fivePairs = [
+      outsideWindow,
+      restLap(2),
+      outsideWindow,
+      restLap(4),
+      outsideWindow,
+      restLap(6),
+      outsideWindow,
+      restLap(8),
+      outsideWindow,
+      restLap(10),
+    ];
+    expect(detect4x4(fivePairs, true)).toBeNull();
+  });
+
+  it("still returns null for empty laps even with skipTimeCheck", () => {
+    expect(detect4x4([], true)).toBeNull();
   });
 });
 
@@ -185,21 +223,43 @@ describe("detectDistanceInterval", () => {
     expect(result?.distance).toBeCloseTo(DIST_METERS, 0);
   });
 
-  it("returns null for only 1 pair", () => {
-    const laps = [distFastLap(1), distRestLap(2)];
-    expect(detectDistanceInterval(laps)).toBeNull();
+  it("returns null for fewer than 3 pairs", () => {
+    expect(detectDistanceInterval([distFastLap(1), distRestLap(2)])).toBeNull();
+    expect(
+      detectDistanceInterval([
+        distFastLap(1),
+        distRestLap(2),
+        distFastLap(3),
+        distRestLap(4),
+      ]),
+    ).toBeNull();
   });
 
-  it("returns null when fast-lap distances exceed 5% variance", () => {
+  it("returns null when fast-lap distances exceed 10% variance", () => {
     const laps = [
       distFastLap(1, 400),
       distRestLap(2),
-      distFastLap(3, 450), // 12.5% larger — outside 5% buffer
+      distFastLap(3, 500), // ~15% off mean — outside 10% buffer and >50m
       distRestLap(4),
       distFastLap(5, 400),
       distRestLap(6),
     ];
     expect(detectDistanceInterval(laps)).toBeNull();
+  });
+
+  it("accepts small-distance intervals within 50m absolute buffer even if >10%", () => {
+    // ~200m intervals: 200, 240, 200 — 40m off mean (20% but within 50m abs)
+    const laps = [
+      distFastLap(1, 200),
+      distRestLap(2),
+      distFastLap(3, 240),
+      distRestLap(4),
+      distFastLap(5, 200),
+      distRestLap(6),
+    ];
+    const result = detectDistanceInterval(laps);
+    expect(result).not.toBeNull();
+    expect(result?.pairs.length).toBe(3);
   });
 
   it("returns null when speed difference is less than 30%", () => {
@@ -218,9 +278,8 @@ describe("detectDistanceInterval", () => {
       distFastLap(5),
       distRestLap(6),
     ];
-    // First pair fails speed check → only 2 valid pairs remaining
-    const result = detectDistanceInterval(laps);
-    expect(result?.pairs.length).toBe(2);
+    // First pair fails speed check → only 2 valid pairs remaining, below minimum
+    expect(detectDistanceInterval(laps)).toBeNull();
   });
 
   it("ignores warmup/cooldown that don't meet speed threshold", () => {
@@ -347,6 +406,32 @@ describe("buildGroups", () => {
       { 1: VALID_4x4_LAPS, 2: makeDistanceLapsForGroup(3) },
     );
     expect(groups).toHaveLength(2);
+  });
+
+  it("classifies activity as 4x4 when name contains '4x4' and laps are outside the time window", () => {
+    const outsideWindow = makeLap(0, 300, FAST_SPEED); // 300s > MAX_TIME
+    const laps = [
+      outsideWindow,
+      restLap(2),
+      outsideWindow,
+      restLap(4),
+      outsideWindow,
+      restLap(6),
+      outsideWindow,
+      restLap(8),
+    ];
+    const activity: Activity = {
+      id: 1,
+      name: "4x4 Intervals",
+      distance: 10000,
+      moving_time: 3600,
+      start_date_local: "2026-03-01T08:00:00Z",
+      sport_type: "Run",
+    };
+    const groups = buildGroups([activity], { 1: laps });
+    expect(groups).toHaveLength(1);
+    expect(groups[0].id).toBe("4x4");
+    expect(groups[0].sessions[0].repCount).toBe(4);
   });
 
   it("sorts groups by session count descending", () => {
